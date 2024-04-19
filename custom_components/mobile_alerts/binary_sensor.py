@@ -7,6 +7,7 @@ import copy
 import datetime
 import logging
 import time
+import dataclasses
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -76,7 +77,7 @@ class MobileAlertesGatewayBinarySensor(BinarySensorEntity):
         """Initialize the sensor."""
         super().__init__()
         self._gateway = gateway
-        description.translation_key = description.key
+        description = dataclasses.replace(description, translation_key = description.key)
         self.entity_description = description
         self._attr_has_entity_name = True
         self._attr_device_class = None
@@ -113,7 +114,7 @@ class MobileAlertesBinarySensor(MobileAlertesEntity, BinarySensorEntity):
             )
 
         if description is not None and description.translation_key is None:
-            description.translation_key = description.key
+            description = dataclasses.replace(description, translation_key = description.key)
 
         _LOGGER.debug("translation_key %s", description.translation_key)
 
@@ -167,8 +168,13 @@ class MobileAlertesIsRainingBinarySensor(MobileAlertesBinarySensor):
                     time_span_sensor._attr_native_value,
                     time.ctime(time_span_sensor.last_update),
                 )
+                curr_val = 0
+                try:    
+                    curr_val = int(time_span_sensor._attr_native_value)
+                except Exception:
+                    curr_val = 0
                 value = (
-                    (int(time_span_sensor._attr_native_value) == 0) and
+                    (curr_val == 0) and
                     (
                         time_span_sensor.last_update >= 
                         time.time() - LAST_RAIN_PERIOD
